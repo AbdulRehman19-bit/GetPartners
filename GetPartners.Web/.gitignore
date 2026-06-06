@@ -1,0 +1,27 @@
+# Build output
+**/bin/
+**/obj/
+
+# User-specific VS Code settings
+.vscode/
+*.user
+*.suo
+
+# ASP.NET Core
+**/wwwroot/images/
+**/appsettings.Development.json
+
+# SECRETS - never commit these
+**/appsettings.json
+
+# EF Core migrations temporarily generated
+# (remove this line if you want migrations tracked)
+# **/Migrations/
+
+# dotnet tools
+.dotnet/
+*.nupkg
+
+# OS files
+.DS_Store
+Thumbs.db

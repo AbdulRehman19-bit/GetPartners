@@ -1,0 +1,45 @@
+using GetPartners.Web.DTOs;
+using GetPartners.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace GetPartners.Web.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly AuthService _authService;
+
+    public AuthController(AuthService authService)
+    {
+        _authService = authService;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        string? token = await _authService.RegisterAsync(dto);
+
+        if (token == null)
+            return BadRequest(new { message = "Email already in use." });
+
+        return Ok(new { token });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        string? token = await _authService.LoginAsync(dto);
+
+        if (token == null)
+            return Unauthorized(new { message = "Invalid email or password." });
+
+        return Ok(new { token });
+    }
+}

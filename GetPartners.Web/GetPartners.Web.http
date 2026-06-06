@@ -1,0 +1,6 @@
+@GetPartners.Web_HostAddress = http://localhost:5185
+
+GET {{GetPartners.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
