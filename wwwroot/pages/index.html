@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GetPartners - Find Your Match</title>
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--surface-soft); }
+    .auth-card {
+      width: 420px; background: var(--surface); border-radius: 24px;
+      box-shadow: 0 16px 48px rgba(200,75,158,0.14); overflow: hidden;
+    }
+    .auth-header {
+      background: linear-gradient(135deg, var(--purple-dark), var(--primary));
+      padding: 36px 32px 28px; text-align: center;
+    }
+    .auth-logo { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: white; margin-bottom: 6px; }
+    .auth-tagline { color: rgba(255,255,255,0.75); font-size: 13px; }
+    .auth-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .auth-tab {
+      flex: 1; padding: 14px; text-align: center; font-size: 14px;
+      font-weight: 500; cursor: pointer; color: var(--text-light);
+      border-bottom: 2px solid transparent; transition: all 0.2s;
+    }
+    .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .auth-body { padding: 28px 32px 32px; }
+    .form-panel { display: none; }
+    .form-panel.active { display: block; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; padding: 11px 14px; border: 1px solid var(--border);
+      border-radius: 12px; font-size: 14px; color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif; outline: none; transition: border 0.2s;
+      background: var(--surface-soft);
+    }
+    .form-input:focus { border-color: var(--primary); background: white; }
+    .btn-full { width: 100%; padding: 12px; font-size: 15px; border-radius: 14px; margin-top: 4px; }
+    .divider { text-align: center; color: var(--text-light); font-size: 12px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">GetPartners</div>
+      <div class="auth-tagline">Find your perfect life partner</div>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <div class="auth-body">
+      <!-- Login -->
+      <div id="panel-login" class="form-panel active">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input id="login-email" class="form-input" type="email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="login-password" class="form-input" type="password" placeholder="••••••••" />
+        </div>
+        <button class="btn-primary btn-full" onclick="login()">Sign In</button>
+      </div>
+
+      <!-- Register -->
+      <div id="panel-register" class="form-panel">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input id="reg-email" class="form-input" type="email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="reg-password" class="form-input" type="password" placeholder="Min. 6 characters" />
+        </div>
+        <button class="btn-primary btn-full" onclick="register()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (localStorage.getItem('gp_token')) {
+        window.location.href = '/pages/browse.html';
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach((t, i) => {
+            t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+        });
+        document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+        document.getElementById('panel-register').classList.toggle('active', tab === 'register');
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        const active = document.querySelector('.form-panel.active').id;
+        active === 'panel-login' ? login() : register();
+    });
+  </script>
+</body>
+</html>
