@@ -5,7 +5,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
+// Add this using at the top
+using Supabase;
 
+// Add this with the other builder.Services lines
+var supabaseUrl = builder.Configuration["Supabase:Url"]!;
+var supabaseKey = builder.Configuration["Supabase:ServiceKey"]!;
+builder.Services.AddSingleton(new Supabase.Client(supabaseUrl, supabaseKey,
+    new SupabaseOptions { AutoConnectRealtime = false }));
 
 var builder = WebApplication.CreateBuilder(args);
 

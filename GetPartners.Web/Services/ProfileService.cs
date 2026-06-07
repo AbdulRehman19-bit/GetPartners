@@ -82,7 +82,20 @@ public class ProfileService
         return MapToDto(profile);
     }
 
-    public async Task<string?> UploadPhotoAsync(int userId, IFormFile photo)
+        // Add this using at the top of ProfileService.cs
+using Supabase;
+
+// Add Supabase client to constructor
+private readonly AppDbContext _db;
+private readonly Supabase.Client _supabase;
+
+public ProfileService(AppDbContext db, Supabase.Client supabase)
+{
+    _db = db;
+    _supabase = supabase;
+}
+
+public async Task<string?> UploadPhotoAsync(int userId, IFormFile photo)
 {
     var profile = await _db.Profiles
         .FirstOrDefaultAsync(p => p.UserId == userId);
@@ -94,26 +107,34 @@ public class ProfileService
     string ext = Path.GetExtension(photo.FileName).ToLower();
     if (!allowed.Contains(ext)) return null;
 
-    // Fallback if WebRootPath is null
-    string webRoot = _env.WebRootPath
-        ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+    // Read file into byte array
+    using var ms = new MemoryStream();
+    await photo.CopyToAsync(ms);
+    byte[] fileBytes = ms.ToArray();
 
+    // Build unique file path inside the bucket
     string fileName = $"user_{userId}_{Guid.NewGuid()}{ext}";
-    string uploadsFolder = Path.Combine(webRoot, "images");
+    string bucketPath = $"profile-photos/{fileName}";
 
-    Directory.CreateDirectory(uploadsFolder);
+    // Upload to Supabase Storage
+    await _supabase.Storage
+        .From("profile-photos")
+        .Upload(fileBytes, fileName, new Supabase.Storage.FileOptions
+        {
+            ContentType = photo.ContentType,
+            Upsert = true
+        });
 
-    string filePath = Path.Combine(uploadsFolder, fileName);
+    // Build the public URL
+    string publicUrl = _supabase.Storage
+        .From("profile-photos")
+        .GetPublicUrl(fileName);
 
-    using (var stream = new FileStream(filePath, FileMode.Create))
-    {
-        await photo.CopyToAsync(stream);
-    }
-
-    profile.PhotoUrl = $"/images/{fileName}";
+    // Save URL to DB
+    profile.PhotoUrl = publicUrl;
     await _db.SaveChangesAsync();
 
-    return profile.PhotoUrl;
+    return publicUrl;
 }
 
     private static ProfileResponseDto MapToDto(Profile profile) => new()
