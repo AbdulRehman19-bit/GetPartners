@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GetPartners - Discover</title>
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    .discover-layout { display: flex; gap: 28px; height: 100%; }
+    .card-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .profile-card {
+      width: 300px; height: 440px; border-radius: 24px; overflow: hidden;
+      position: relative; box-shadow: 0 16px 48px rgba(200,75,158,0.22);
+      transition: transform 0.3s;
+    }
+    .profile-card:hover { transform: translateY(-4px); }
+    .profile-card img { width: 100%; height: 100%; object-fit: cover; }
+    .card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.1) 55%, transparent 100%); }
+    .card-match { position: absolute; top: 12px; right: 12px; background: var(--green); color: white; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+    .card-info { position: absolute; bottom: 14px; left: 14px; right: 14px; color: white; }
+    .card-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
+    .card-city { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+    .action-buttons { display: flex; align-items: center; gap: 16px; }
+    .action-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 2px solid var(--border); background: white;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .action-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .action-btn:hover { transform: scale(1.12); }
+    .action-btn.pass:hover { border-color: var(--danger); color: var(--danger); }
+    .action-btn.star { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; color: white; box-shadow: 0 8px 24px rgba(200,75,158,0.4); }
+    .action-btn.like { color: var(--primary); border-color: var(--primary-light); }
+    .action-btn.like:hover { background: var(--primary); color: white; }
+    .interest-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 300px; }
+    .filter-panel {
+      width: 230px; background: var(--surface); border-radius: 20px;
+      padding: 20px; height: fit-content; flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(200,75,158,0.10);
+    }
+    .filter-title { font-weight: 600; font-size: 15px; color: var(--text-primary); margin-bottom: 14px; }
+    .filter-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); }
+    .filter-section { margin-top: 14px; }
+    .filter-section-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .pref-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pref-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); cursor: pointer; color: var(--text-secondary); background: white; transition: all 0.15s; }
+    .pref-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .range-track { height: 4px; background: var(--border); border-radius: 2px; margin: 10px 0; position: relative; }
+    .range-fill { height: 100%; background: linear-gradient(to right, var(--primary), var(--primary-light)); border-radius: 2px; width: 60%; }
+    .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+    .toggle { width: 36px; height: 20px; background: var(--primary); border-radius: 10px; position: relative; cursor: pointer; }
+    .toggle-dot { width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; }
+    .filter-footer { display: flex; gap: 8px; margin-top: 16px; }
+    .filter-footer .btn-outline, .filter-footer .btn-primary { flex: 1; padding: 8px 0; font-size: 13px; text-align: center; border-radius: 20px; }
+    .match-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(74,31,114,0.92); z-index: 100;
+      align-items: center; justify-content: center; flex-direction: column;
+      text-align: center; color: white;
+    }
+    .match-overlay.show { display: flex; }
+    .match-overlay h2 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; margin: 16px 0 8px; }
+    .match-overlay p { color: rgba(255,255,255,0.75); margin-bottom: 24px; }
+    .match-avatars { display: flex; gap: -12px; margin-bottom: 12px; }
+    .match-avatars img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary-light); object-fit: cover; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a class="sidebar-logo" href="/pages/browse.html"><span>G</span></a>
+      <a class="nav-item active" href="/pages/browse.html" title="Discover">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      </a>
+      <a class="nav-item" href="/pages/matches.html" title="Matches">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </a>
+      <div class="nav-item add" title="Add">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <a class="nav-item" href="/pages/chat.html" title="Messages">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </a>
+      <div class="sidebar-bottom">
+        <div class="nav-item" onclick="logout()" title="Logout">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Discover</div>
+          <div class="page-subtitle">Find your perfect match</div>
+        </div>
+        <div class="hdr-icons">
+          <div class="hdr-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div class="hdr-icon">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <div class="discover-layout">
+          <div class="card-area">
+            <div id="card-container"><div class="spinner"></div></div>
+            <div id="action-buttons" class="action-buttons" style="display:none">
+              <div class="action-btn pass" onclick="passProfile()" title="Pass">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+              <div class="action-btn star" title="Super Like">
+                <svg viewBox="0 0 24 24" fill="white" stroke="white"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="action-btn like" onclick="likeProfile()" title="Like">
+                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+            </div>
+            <div id="interest-chips" class="interest-chips"></div>
+          </div>
+
+          <div class="filter-panel">
+            <div class="filter-title">Filters</div>
+            <div class="filter-row"><span>Location</span><span style="color:var(--text-light);font-size:12px">People nearby ›</span></div>
+            <div class="filter-section">
+              <div class="filter-section-title">Preferences</div>
+              <div class="pref-chips">
+                <div class="pref-chip active" onclick="togglePref(this)">Looking to marry</div>
+                <div class="pref-chip" onclick="togglePref(this)">Friends first</div>
+              </div>
+            </div>
+            <div class="filter-section">
+              <div class="filter-section-title">Distance</div>
+              <div class="range-track"><div class="range-fill"></div></div>
+              <div class="range-labels"><span>0 km</span><span>10 km</span></div>
+            </div>
+            <div class="filter-section">
+              <div class="filter-section-title">Age</div>
+              <div class="range-track"><div class="range-fill" style="width:40%;margin-left:20%"></div></div>
+              <div class="range-labels"><span>20</span><span>30</span></div>
+            </div>
+            <div class="toggle-row">
+              <span>Online now</span>
+              <div class="toggle"><div class="toggle-dot"></div></div>
+            </div>
+            <div class="filter-footer">
+              <div class="btn-outline">Reset</div>
+              <div class="btn-primary" onclick="loadNextProfile()">Apply</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Match celebration overlay -->
+  <div id="match-overlay" class="match-overlay">
+    <div class="match-avatars">
+      <img id="match-photo" src="" alt="match" />
+    </div>
+    <h2>It's a Match! 🎉</h2>
+    <p id="match-name-text">You and someone liked each other!</p>
+    <button class="btn-primary" onclick="openChat()">Send a Message</button>
+    <button class="btn-outline" style="margin-top:10px;color:white;border-color:rgba(255,255,255,0.3)" onclick="closeMatch()">Keep Browsing</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/browse.js"></script>
+</body>
+</html>

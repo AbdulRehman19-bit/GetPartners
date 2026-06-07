@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GetPartners - Chat</title>
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    .chat-shell { display: flex; height: 100%; }
+    .conv-list { width: 300px; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; background: var(--surface); }
+    .conv-header { padding: 18px 16px 12px; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--border); }
+    .conv-search { margin: 10px 12px; display: flex; align-items: center; gap: 8px; background: var(--surface-soft); border-radius: 12px; padding: 8px 12px; border: 1px solid var(--border); }
+    .conv-search input { border: none; background: transparent; font-size: 13px; color: var(--text-primary); outline: none; flex: 1; font-family: 'DM Sans', sans-serif; }
+    .conv-search svg { width: 14px; height: 14px; stroke: var(--text-light); fill: none; stroke-width: 2; flex-shrink: 0; }
+    .conv-items { flex: 1; overflow-y: auto; padding: 8px; }
+    .conv-item { display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-radius: 12px; transition: background 0.15s; }
+    .conv-item:hover, .conv-item.active { background: var(--surface-soft); }
+    .conv-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--border); }
+    .conv-info { flex: 1; min-width: 0; }
+    .conv-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .conv-msg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .online-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
+
+    .chat-window { flex: 1; display: flex; flex-direction: column; background: var(--surface-soft); }
+    .chat-header { padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .chat-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .chat-name { font-weight: 600; color: var(--text-primary); font-size: 15px; }
+    .chat-status { font-size: 12px; color: var(--green); display: flex; align-items: center; gap: 4px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .msg-row { display: flex; flex-direction: column; }
+    .msg-row.sent { align-items: flex-end; }
+    .msg-row.received { align-items: flex-start; }
+    .msg-bubble { max-width: 62%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+    .msg-bubble.sent { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border-bottom-right-radius: 4px; }
+    .msg-bubble.received { background: white; color: var(--text-primary); border-bottom-left-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .msg-time { font-size: 10px; color: var(--text-light); margin-top: 3px; }
+    .chat-input-bar { padding: 14px 20px; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .chat-input { flex: 1; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 24px; padding: 10px 16px; font-size: 14px; color: var(--text-primary); outline: none; font-family: 'DM Sans', sans-serif; }
+    .chat-input:focus { border-color: var(--primary); }
+    .chat-send { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(200,75,158,0.35); }
+    .chat-send svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: transparent; color: var(--text-light); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .no-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-light); text-align: center; }
+    .no-chat svg { width: 48px; height: 48px; stroke: var(--border); fill: none; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="sidebar">
+      <a class="sidebar-logo" href="/pages/browse.html"><span>G</span></a>
+      <a class="nav-item" href="/pages/browse.html" title="Discover">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      </a>
+      <a class="nav-item" href="/pages/matches.html" title="Matches">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </a>
+      <div class="nav-item add">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <a class="nav-item active" href="/pages/chat.html" title="Messages">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </a>
+      <div class="sidebar-bottom">
+        <div class="nav-item" onclick="logout()">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content" style="padding:0">
+      <div class="chat-shell">
+        <!-- Conversation list -->
+        <div class="conv-list">
+          <div class="conv-header">Messages</div>
+          <div class="conv-search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Search..." />
+          </div>
+          <div id="conv-items" class="conv-items"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Chat window -->
+        <div class="chat-window">
+          <div id="chat-header" class="chat-header" style="display:none">
+            <img id="chat-avatar" class="chat-avatar" src="" alt="match" />
+            <div>
+              <div id="chat-name" class="chat-name"></div>
+              <div class="chat-status"><span style="width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block"></span> Online</div>
+            </div>
+          </div>
+          <div id="chat-messages" class="chat-messages">
+            <div class="no-chat">
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <p>Select a match to start chatting</p>
+            </div>
+          </div>
+          <div id="chat-input-bar" class="chat-input-bar" style="display:none">
+            <button class="icon-btn">
+              <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <input id="msg-input" class="chat-input" placeholder="Type a message..." />
+            <button class="icon-btn">
+              <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <button class="chat-send" onclick="sendMessage()">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/chat.js"></script>
+</body>
+</html>
