@@ -8,12 +8,12 @@ namespace GetPartners.Web.Services;
 public class ProfileService
 {
     private readonly AppDbContext _db;
-    private readonly IWebHostEnvironment _env;
+    private readonly Supabase.Client _supabase;
 
-    public ProfileService(AppDbContext db, IWebHostEnvironment env)
+    public ProfileService(AppDbContext db, Supabase.Client supabase)
     {
         _db = db;
-        _env = env;
+        _supabase = supabase;
     }
 
     public async Task<ProfileResponseDto?> GetProfileAsync(int userId)
@@ -22,13 +22,11 @@ public class ProfileService
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (profile == null) return null;
-
         return MapToDto(profile);
     }
 
     public async Task<ProfileResponseDto?> CreateProfileAsync(int userId, CreateProfileDto dto)
     {
-        // Prevent duplicate profiles
         bool exists = await _db.Profiles.AnyAsync(p => p.UserId == userId);
         if (exists) return null;
 
@@ -45,7 +43,6 @@ public class ProfileService
             PhotoUrl = ""
         };
 
-        // Save preference at the same time
         var preference = new Preference
         {
             UserId = userId,
@@ -70,7 +67,6 @@ public class ProfileService
 
         if (profile == null) return null;
 
-        // Only update fields that were provided
         if (!string.IsNullOrEmpty(dto.Name)) profile.Name = dto.Name;
         if (dto.Age > 0) profile.Age = dto.Age;
         if (!string.IsNullOrEmpty(dto.City)) profile.City = dto.City;
@@ -82,60 +78,45 @@ public class ProfileService
         return MapToDto(profile);
     }
 
-        // Add this using at the top of ProfileService.cs
-using Supabase;
+    public async Task<string?> UploadPhotoAsync(int userId, IFormFile photo)
+    {
+        var profile = await _db.Profiles
+            .FirstOrDefaultAsync(p => p.UserId == userId);
 
-// Add Supabase client to constructor
-private readonly AppDbContext _db;
-private readonly Supabase.Client _supabase;
+        if (profile == null) return null;
 
-public ProfileService(AppDbContext db, Supabase.Client supabase)
-{
-    _db = db;
-    _supabase = supabase;
-}
+        // Validate file type
+        string[] allowed = { ".jpg", ".jpeg", ".png", ".webp" };
+        string ext = Path.GetExtension(photo.FileName).ToLower();
+        if (!allowed.Contains(ext)) return null;
 
-public async Task<string?> UploadPhotoAsync(int userId, IFormFile photo)
-{
-    var profile = await _db.Profiles
-        .FirstOrDefaultAsync(p => p.UserId == userId);
+        // Read file bytes
+        using var ms = new MemoryStream();
+        await photo.CopyToAsync(ms);
+        byte[] fileBytes = ms.ToArray();
 
-    if (profile == null) return null;
+        // Unique filename
+        string fileName = $"user_{userId}_{Guid.NewGuid()}{ext}";
 
-    // Validate file type
-    string[] allowed = { ".jpg", ".jpeg", ".png", ".webp" };
-    string ext = Path.GetExtension(photo.FileName).ToLower();
-    if (!allowed.Contains(ext)) return null;
+        // Upload to Supabase Storage bucket
+        await _supabase.Storage
+            .From("profile-photos")
+            .Upload(fileBytes, fileName, new Supabase.Storage.FileOptions
+            {
+                ContentType = photo.ContentType,
+                Upsert = true
+            });
 
-    // Read file into byte array
-    using var ms = new MemoryStream();
-    await photo.CopyToAsync(ms);
-    byte[] fileBytes = ms.ToArray();
+        // Get the public URL
+        string publicUrl = _supabase.Storage
+            .From("profile-photos")
+            .GetPublicUrl(fileName);
 
-    // Build unique file path inside the bucket
-    string fileName = $"user_{userId}_{Guid.NewGuid()}{ext}";
-    string bucketPath = $"profile-photos/{fileName}";
+        profile.PhotoUrl = publicUrl;
+        await _db.SaveChangesAsync();
 
-    // Upload to Supabase Storage
-    await _supabase.Storage
-        .From("profile-photos")
-        .Upload(fileBytes, fileName, new Supabase.Storage.FileOptions
-        {
-            ContentType = photo.ContentType,
-            Upsert = true
-        });
-
-    // Build the public URL
-    string publicUrl = _supabase.Storage
-        .From("profile-photos")
-        .GetPublicUrl(fileName);
-
-    // Save URL to DB
-    profile.PhotoUrl = publicUrl;
-    await _db.SaveChangesAsync();
-
-    return publicUrl;
-}
+        return publicUrl;
+    }
 
     private static ProfileResponseDto MapToDto(Profile profile) => new()
     {
