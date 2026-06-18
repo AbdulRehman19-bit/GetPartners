@@ -8,12 +8,12 @@ namespace GetPartners.Web.Services;
 public class ProfileService
 {
     private readonly AppDbContext _db;
-    private readonly IWebHostEnvironment _env;
+    private readonly Supabase.Client _supabase;
 
-    public ProfileService(AppDbContext db, IWebHostEnvironment env)
+    public ProfileService(AppDbContext db, Supabase.Client supabase)
     {
         _db = db;
-        _env = env;
+        _supabase = supabase;
     }
 
     public async Task<ProfileResponseDto?> GetProfileAsync(int userId)
@@ -22,13 +22,11 @@ public class ProfileService
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (profile == null) return null;
-
         return MapToDto(profile);
     }
 
     public async Task<ProfileResponseDto?> CreateProfileAsync(int userId, CreateProfileDto dto)
     {
-        // Prevent duplicate profiles
         bool exists = await _db.Profiles.AnyAsync(p => p.UserId == userId);
         if (exists) return null;
 
@@ -45,7 +43,6 @@ public class ProfileService
             PhotoUrl = ""
         };
 
-        // Save preference at the same time
         var preference = new Preference
         {
             UserId = userId,
@@ -70,7 +67,6 @@ public class ProfileService
 
         if (profile == null) return null;
 
-        // Only update fields that were provided
         if (!string.IsNullOrEmpty(dto.Name)) profile.Name = dto.Name;
         if (dto.Age > 0) profile.Age = dto.Age;
         if (!string.IsNullOrEmpty(dto.City)) profile.City = dto.City;
@@ -83,38 +79,44 @@ public class ProfileService
     }
 
     public async Task<string?> UploadPhotoAsync(int userId, IFormFile photo)
-{
-    var profile = await _db.Profiles
-        .FirstOrDefaultAsync(p => p.UserId == userId);
-
-    if (profile == null) return null;
-
-    // Validate file type
-    string[] allowed = { ".jpg", ".jpeg", ".png", ".webp" };
-    string ext = Path.GetExtension(photo.FileName).ToLower();
-    if (!allowed.Contains(ext)) return null;
-
-    // Fallback if WebRootPath is null
-    string webRoot = _env.WebRootPath
-        ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-    string fileName = $"user_{userId}_{Guid.NewGuid()}{ext}";
-    string uploadsFolder = Path.Combine(webRoot, "images");
-
-    Directory.CreateDirectory(uploadsFolder);
-
-    string filePath = Path.Combine(uploadsFolder, fileName);
-
-    using (var stream = new FileStream(filePath, FileMode.Create))
     {
-        await photo.CopyToAsync(stream);
+        var profile = await _db.Profiles
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (profile == null) return null;
+
+        // Validate file type
+        string[] allowed = { ".jpg", ".jpeg", ".png", ".webp" };
+        string ext = Path.GetExtension(photo.FileName).ToLower();
+        if (!allowed.Contains(ext)) return null;
+
+        // Read file bytes
+        using var ms = new MemoryStream();
+        await photo.CopyToAsync(ms);
+        byte[] fileBytes = ms.ToArray();
+
+        // Unique filename
+        string fileName = $"user_{userId}_{Guid.NewGuid()}{ext}";
+
+        // Upload to Supabase Storage bucket
+        await _supabase.Storage
+            .From("profile-photos")
+            .Upload(fileBytes, fileName, new Supabase.Storage.FileOptions
+            {
+                ContentType = photo.ContentType,
+                Upsert = true
+            });
+
+        // Get the public URL
+        string publicUrl = _supabase.Storage
+            .From("profile-photos")
+            .GetPublicUrl(fileName);
+
+        profile.PhotoUrl = publicUrl;
+        await _db.SaveChangesAsync();
+
+        return publicUrl;
     }
-
-    profile.PhotoUrl = $"/images/{fileName}";
-    await _db.SaveChangesAsync();
-
-    return profile.PhotoUrl;
-}
 
     private static ProfileResponseDto MapToDto(Profile profile) => new()
     {

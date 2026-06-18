@@ -2,21 +2,15 @@
 **/bin/
 **/obj/
 
-# User-specific VS Code settings
+# VS Code
 .vscode/
 *.user
 *.suo
 
-# ASP.NET Core
-**/wwwroot/images/
-**/appsettings.Development.json
-
-# SECRETS - never commit these
+# ASP.NET Core - exclude secrets and uploads
 **/appsettings.json
-
-# EF Core migrations temporarily generated
-# (remove this line if you want migrations tracked)
-# **/Migrations/
+**/appsettings.Development.json
+**/wwwroot/images/
 
 # dotnet tools
 .dotnet/

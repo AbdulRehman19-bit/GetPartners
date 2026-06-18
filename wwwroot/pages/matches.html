@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GetPartners - Matches</title>
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    .matches-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .match-tab { padding: 10px 20px; font-size: 14px; font-weight: 500; color: var(--text-light); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+    .match-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .matches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+    .match-card { border-radius: 18px; overflow: hidden; position: relative; box-shadow: 0 4px 20px rgba(200,75,158,0.12); cursor: pointer; transition: transform 0.2s; text-decoration: none; display: block; }
+    .match-card:hover { transform: translateY(-3px); }
+    .match-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+    .match-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.65), transparent 55%); }
+    .match-badge { position: absolute; top: 10px; right: 10px; background: var(--green); color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; }
+    .match-info { position: absolute; bottom: 10px; left: 10px; right: 10px; color: white; }
+    .match-name { font-size: 14px; font-weight: 600; font-family: 'Playfair Display', serif; }
+    .match-sub { font-size: 11px; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="sidebar">
+      <a class="sidebar-logo" href="/pages/browse.html"><span>G</span></a>
+      <a class="nav-item" href="/pages/browse.html" title="Discover">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      </a>
+      <a class="nav-item active" href="/pages/matches.html" title="Matches">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </a>
+      <div class="nav-item add">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <a class="nav-item" href="/pages/chat.html" title="Messages">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </a>
+      <div class="sidebar-bottom">
+        <div class="nav-item" onclick="logout()">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Matches</div>
+          <div class="page-subtitle" id="match-count">Loading...</div>
+        </div>
+        <div class="hdr-icons">
+          <div class="hdr-icon">
+            <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <div class="matches-tabs">
+          <div class="match-tab active">All Matches</div>
+          <div class="match-tab">Recent</div>
+        </div>
+        <div id="matches-grid" class="matches-grid"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/matches.js"></script>
+</body>
+</html>

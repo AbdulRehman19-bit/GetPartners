@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GetPartners - Setup Profile</title>
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    body { display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; min-height: 100vh; }
+    .setup-card {
+      width: 520px; background: var(--surface); border-radius: 24px;
+      box-shadow: 0 16px 48px rgba(200,75,158,0.12); overflow: hidden;
+    }
+    .setup-header { background: linear-gradient(135deg, var(--purple-dark), var(--primary)); padding: 28px 32px; }
+    .setup-header h1 { font-family: 'Playfair Display', serif; font-size: 22px; color: white; font-weight: 700; }
+    .setup-header p { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 4px; }
+    .setup-body { padding: 28px 32px 32px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { margin-bottom: 0; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 10px 13px; border: 1px solid var(--border);
+      border-radius: 12px; font-size: 14px; color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif; outline: none; transition: border 0.2s;
+      background: var(--surface-soft);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); background: white; }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .section-divider { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 14px; grid-column: 1/-1; border-top: 1px solid var(--border); padding-top: 16px; }
+    .btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: 14px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="setup-card">
+    <div class="setup-header">
+      <h1>Complete Your Profile</h1>
+      <p>Help others find and connect with you</p>
+    </div>
+    <div class="setup-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input id="name" class="form-input" type="text" placeholder="Ali Hassan" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input id="age" class="form-input" type="number" placeholder="25" min="18" max="80" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input id="city" class="form-input" type="text" placeholder="Islamabad" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select id="gender" class="form-select">
+            <option value="">Select...</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Education</label>
+          <input id="education" class="form-input" type="text" placeholder="BS Computer Science" />
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Religion</label>
+          <input id="religion" class="form-input" type="text" placeholder="Islam" />
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Bio</label>
+          <textarea id="bio" class="form-textarea" placeholder="Tell others a little about yourself..."></textarea>
+        </div>
+
+        <div class="section-divider">Match Preferences</div>
+
+        <div class="form-group">
+          <label class="form-label">Min Age</label>
+          <input id="min-age" class="form-input" type="number" placeholder="20" value="20" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Age</label>
+          <input id="max-age" class="form-input" type="number" placeholder="35" value="35" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred City</label>
+          <input id="pref-city" class="form-input" type="text" placeholder="Islamabad" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred Religion</label>
+          <input id="pref-religion" class="form-input" type="text" placeholder="Islam" />
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Looking For</label>
+          <select id="looking-for" class="form-select">
+            <option value="">Select...</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary btn-full" onclick="saveProfile()">Save & Continue</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    requireAuth();
+
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    function saveProfile() {
+      const data = {
+        name:              document.getElementById('name').value.trim(),
+        age:               parseInt(document.getElementById('age').value),
+        city:              document.getElementById('city').value.trim(),
+        gender:            document.getElementById('gender').value,
+        education:         document.getElementById('education').value.trim(),
+        religion:          document.getElementById('religion').value.trim(),
+        bio:               document.getElementById('bio').value.trim(),
+        minAge:            parseInt(document.getElementById('min-age').value) || 18,
+        maxAge:            parseInt(document.getElementById('max-age').value) || 50,
+        preferredCity:     document.getElementById('pref-city').value.trim(),
+        preferredReligion: document.getElementById('pref-religion').value.trim(),
+        lookingForGender:  document.getElementById('looking-for').value
+      };
+
+      if (!data.name || !data.age || !data.city || !data.gender) {
+        showToast('Please fill in all required fields.', 'error'); return;
+      }
+
+      $.ajax({
+        url: '/api/profile',
+        method: 'POST',
+        contentType: 'application/json',
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('gp_token') },
+        data: JSON.stringify(data),
+        success: () => {
+          showToast('Profile created!', 'success');
+          setTimeout(() => window.location.href = '/pages/browse.html', 800);
+        },
+        error: (xhr) => {
+          showToast(xhr.responseJSON?.message || 'Failed to save profile.', 'error');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
