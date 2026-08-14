@@ -33,30 +33,7 @@ A full-stack matrimonial matchmaking web application built with ASP.NET Core, En
 - .NET 8 SDK
 - PostgreSQL database (Supabase free tier recommended)
 
-### Setup
 
-1. Clone the repository
-```bash
-   git clone https://github.com/YOUR_USERNAME/GetPartners.git
-   cd GetPartners/GetPartners.Web
-```
-
-2. Copy the example config and fill in your values
-```bash
-   cp appsettings.example.json appsettings.json
-```
-
-3. Run migrations
-```bash
-   dotnet ef database update
-```
-
-4. Start the server
-```bash
-   dotnet run
-```
-
-5. Open Swagger at `https://localhost:PORT/swagger`
 
 ## API Endpoints
 
